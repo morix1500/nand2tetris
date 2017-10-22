@@ -11,7 +11,7 @@
 // "white" in every pixel;
 // the screen should remain fully clear as long as no key is pressed.
 
-    @8192 // 512px * 32 / 16 * 8bit
+    @8192 // 512px * 256px / 16bit
     D=A
     @maxcnt
     M=D
