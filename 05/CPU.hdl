@@ -39,5 +39,29 @@ CHIP CPU {
         pc[15];          // address of next instruction
 
     PARTS:
-    // Put your code here:
+    // decode
+    And16(a=instruction, b=true, out[0..2]=j, out[3..5]=d, out[6..11]=c, out[12]=a, out[13..14]=false, out[15]=i);
+    DMux8Way(in=true, sel=d, a=isnull, b=m1, c=d1, d=m2, d=d2, e=a1, f=a2, f=m3, g=a3, g=d3, h=a4, h=m4, h=d4);
+    Or8Way(a=m1, b=m2, c=m3, d=m4, e=false, f=false, g=false, h=false, out=writeM);
+    Or8Way(a=a1, b=a2, c=a3, d=a4, e=false, f=false, g=false, h=false, out=writeD);
+    Or8Way(a=d1, b=d2, c=d3, d=d4, e=false, f=false, g=false, h=false, out=writeA);
+
+    // instruction or out[t-1]
+    Mux16(a=instruction, b=outm2, sel=i, out=v1);
+
+    // A
+    Register(in=v1, load=writeA, out=v2, out[0..14]=addressM);
+
+    // A or memory
+    Mux16(a=v2, b=inM, sel=a, out=v3);
+
+    // D
+    Register(in=outm2, load=writeD, out=v4);
+
+    // ALU
+    ALU(x=v4, y=v3, zx=c[0], nx=c[1], zy=c[2], ny=c[3], f=c[4], no=c[5], out=out, out=outm2, zr=zr, ng=ng);
+
+    // PC
+    PC(in=v2, load=i, inc=XXXXXX, reset=reset, out[0..14]=pc, out[15]=false);
+
 }
