@@ -42,21 +42,23 @@ CHIP CPU {
     // decode
     // 15 14 13 12 11 10 09 08 07 06 05 04 03 02 01 00
     // i  -  -  a  c1 c2 c3 c4 c5 c6 d1 d2 d3 j1 j2 j3
-    //And16(a=instruction, b=true, out[0..2]=j, out[3..5]=d, out[6..11]=c, out[12]=a, out[13..14]=false, out[15]=i);
-    //DMux8Way(in=true, sel=d, a=isnull, b=m1, c=d1, d=m2, d=d2, e=a1, f=a2, f=m3, g=a3, g=d3, h=a4, h=m4, h=d4);
-    DMux8Way(in=true, sel[0]=instruction[5], sel[1]=instruction[4], sel[2]=instruction[3], a=isnull, b=m1, c=d1, d=m2, d=d2, e=a1, f=a2, f=m3, g=a3, g=d3, h=a4, h=m4, h=d4);
-    //Or8Way(in[0]=m1, in[1]=m2, in[2]=m3, in[3]=m4, in[4]=false, in[5]=false, in[6]=false, in[7]=false, out=writeM);
+    DMux8Way(in=true, sel[0]=instruction[3], sel[1]=instruction[4], sel[2]=instruction[5], a=isnull, b=m1, c=d1, d=m2, d=d2, e=a1, f=a2, f=m3, g=a3, g=d3, h=a4, h=m4, h=d4);
+    Or8Way(in[0]=m1, in[1]=m2, in[2]=m3, in[3]=m4, in[4]=false, in[5]=false, in[6]=false, in[7]=false, out=writeMtmp);
     Or8Way(in[0]=a1, in[1]=a2, in[2]=a3, in[3]=a4, in[4]=false, in[5]=false, in[6]=false, in[7]=false, out=writeA);
     Or8Way(in[0]=d1, in[1]=d2, in[2]=d3, in[3]=d4, in[4]=false, in[5]=false, in[6]=false, in[7]=false, out=writeD);
+    //And(a=writeMtmp, b=writeD, out=writeM);
 
     // instruction or out[t-1]
     Mux16(a=instruction, b=outm2, sel=instruction[15], out=v1);
 
     // A
-    ARegister(in=v1, load=writeA, out=v2, out[0..14]=addressM);
+    Not(in=instruction[15], out=tmpa);
+    Or(a=tmpa, b=writeA, out=loada);
+    ARegister(in=v1, load=loada, out=v2, out[0..14]=addressM); // y
 
     // A or memory
-    Mux16(a=v2, b=inM, sel=instruction[12], out=v3);
+    Mux16(a=v2, b=inM, sel=instruction[12], out=v3); // x
+    And(a=writeMtmp, b=instruction[15], out=writeM);
 
     // D
     DRegister(in=outm2, load=writeD, out=v4);
@@ -67,11 +69,13 @@ CHIP CPU {
     // PC
     Or(a=zr, b=ng, out=tmp);
     Not(in=tmp, out=sei);
-    And(a=instruction[2], b=sei, out=j1, out=writeM);
+    And(a=instruction[0], b=sei, out=j3);
     And(a=instruction[1], b=zr,  out=j2);
-    And(a=instruction[0], b=ng,  out=j3);
+    And(a=instruction[2], b=ng,  out=j1);
     Or8Way(in[0]=j1, in[1]=j2, in[2]=j3, in[3]=false, in[4]=false, in[5]=false, in[6]=false, in[7]=false, out=loadpc);
     Not(in=loadpc, out=isinc);
-    PC(in=v2, load=loadpc, inc=isinc, reset=reset, out[0..14]=pc, out[15]=false);
+    Or(a=loada, b=isinc, out=isinc2);
+    Mux(a=loadpc, b=false, sel=loada, out=loadpc2);
+    PC(in=v2, load=loadpc2, inc=isinc2, reset=reset, out[0..14]=pc, out[15]=false);
 
 }
