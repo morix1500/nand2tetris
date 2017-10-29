@@ -46,7 +46,6 @@ CHIP CPU {
     Or8Way(in[0]=m1, in[1]=m2, in[2]=m3, in[3]=m4, in[4]=false, in[5]=false, in[6]=false, in[7]=false, out=writeMtmp);
     Or8Way(in[0]=a1, in[1]=a2, in[2]=a3, in[3]=a4, in[4]=false, in[5]=false, in[6]=false, in[7]=false, out=writeA);
     Or8Way(in[0]=d1, in[1]=d2, in[2]=d3, in[3]=d4, in[4]=false, in[5]=false, in[6]=false, in[7]=false, out=writeD);
-    //And(a=writeMtmp, b=writeD, out=writeM);
 
     // instruction or out[t-1]
     Mux16(a=instruction, b=outm2, sel=instruction[15], out=v1);
@@ -61,7 +60,8 @@ CHIP CPU {
     And(a=writeMtmp, b=instruction[15], out=writeM);
 
     // D
-    DRegister(in=outm2, load=writeD, out=v4);
+    And(a=instruction[15], b=writeD, out=loadd);
+    DRegister(in=outm2, load=loadd, out=v4);
 
     // ALU
     ALU(x=v4, y=v3, zx=instruction[11], nx=instruction[10], zy=instruction[9], ny=instruction[8], f=instruction[7], no=instruction[6], out=outM, out=outm2, zr=zr, ng=ng);
