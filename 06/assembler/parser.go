@@ -1,9 +1,10 @@
 package main
 
-import(
+import (
 	"bufio"
 	"strings"
 )
+
 type Command int
 
 const (
@@ -23,8 +24,8 @@ type ParserInterface interface {
 }
 
 type Parser struct {
-	file  *bufio.Scanner
-	cmd string
+	file *bufio.Scanner
+	cmd  string
 }
 
 func NewParser(scanner *bufio.Scanner) *Parser {
@@ -68,7 +69,7 @@ func (p *Parser) Symbol(ct Command) string {
 	case A_COMMAND:
 		return p.cmd[1:]
 	case L_COMMAND:
-		return p.cmd[1:len(p.cmd)-2]
+		return p.cmd[1 : len(p.cmd)-1]
 	}
 
 	return ""
@@ -95,8 +96,7 @@ func (p *Parser) Comp() string {
 func (p *Parser) Jump() string {
 	if strings.Index(p.cmd, ";") != -1 {
 		arr := strings.Split(p.cmd, ";")
-		return arr[len(arr) - 1]
+		return arr[len(arr)-1]
 	}
 	return ""
 }
-

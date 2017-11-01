@@ -1,13 +1,37 @@
 package main
 
 import (
+	"bufio"
 	"fmt"
 	"os"
-	"bufio"
+	"path/filepath"
 	"strconv"
 	"strings"
-	"path/filepath"
 )
+
+func scanSymbol(p Parser) *SymbolTable {
+	address := 0
+	st := NewSymbolTable()
+
+	for p.HasMoreCommands() {
+		p.Advance(p.file.Text())
+		if p.cmd == "" {
+			continue
+		}
+		ct := p.CommandType()
+		if ct == A_COMMAND || ct == C_COMMAND {
+			address++
+		} else {
+			sy := p.Symbol(ct)
+			if st.Contains(sy) {
+				continue
+			}
+			a := address
+			st.AddEntry(sy, a)
+		}
+	}
+	return st
+}
 
 func main() {
 	dir, input_file := filepath.Split(os.Args[1])
@@ -22,7 +46,14 @@ func main() {
 	p := NewParser(scanner)
 	c := NewCode()
 
+	st := scanSymbol(*p)
+
+	fp.Seek(0, 0)
+	scanner = bufio.NewScanner(fp)
+	p = NewParser(scanner)
+
 	output := []string{}
+	address := 16
 
 	for p.HasMoreCommands() {
 		p.Advance(p.file.Text())
@@ -42,22 +73,24 @@ func main() {
 			line = line + "111" + c.Comp(comp) + c.Dest(dest) + c.Jump(jump)
 		case A_COMMAND:
 			sy := p.Symbol(ct)
-			v, err := strconv.Atoi(sy)
-			if err != nil {
-				fmt.Println(err)
-				os.Exit(1)
+			a := 0
+			if st.Contains(sy) {
+				a = st.GetAddress(sy)
+			} else {
+				num, err := strconv.Atoi(sy)
+				if err == nil {
+					a = num
+				} else {
+					a = address
+					st.AddEntry(sy, address)
+					address++
+				}
 			}
-			line = line + "0" + fmt.Sprintf("%015b", v)
-		case L_COMMAND:
-			sy := p.Symbol(ct)
-			v, err := strconv.Atoi(sy)
-			if err != nil {
-				fmt.Println(err)
-				os.Exit(1)
-			}
-			line = line + "111" + fmt.Sprintf("%013b", v)
+			line = line + "0" + fmt.Sprintf("%015b", a)
+		default:
+			continue
 		}
-		output = append(output,line)
+		output = append(output, line)
 	}
 
 	output_file := strings.Split(input_file, ".")[0] + ".hack"
@@ -68,8 +101,8 @@ func main() {
 	}
 	defer of.Close()
 
-	for i := 0 ; i < len(output) ; i++ {
-		of.WriteString(output[i] +  "\n")
+	for i := 0; i < len(output); i++ {
+		of.WriteString(output[i] + "\n")
 	}
 
 	os.Exit(0)
