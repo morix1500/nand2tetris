@@ -43,7 +43,11 @@ func (c *CodeWriter) WriteArithmetic(cmd string) {
 		c.file.WriteString("D=-1\n")
 		c.file.WriteString("(L1)\n")
 		c.file.WriteString("@SP\n")
+		c.file.WriteString("A=M\n")
 		c.file.WriteString("M=D\n")
+		c.file.WriteString("@SP\n")
+		c.file.WriteString("M=M+1\n")
+
 		c.file.WriteString("\n")
 
 	}
